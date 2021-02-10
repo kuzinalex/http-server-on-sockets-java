@@ -45,7 +45,6 @@ public class HttpServer {
             System.out.println("Failed to establish connection.");
             System.out.println(e.getMessage());
             System.exit(-1);
-            System.out.println("$I$KI");
          }
       }
    }
