@@ -15,11 +15,13 @@ public class HttpServer {
         try( var server= new ServerSocket(this.port)){
             while (true){
                 var socket=server.accept();
-                var thread=new Session(socket,this.directory);
+                var session=new Session(socket,this.directory);
+                Thread thread= new Thread(session);
                 thread.start();
+                Thread.sleep(2000);
             }
 
-        }catch (IOException exception){
+        }catch (IOException | InterruptedException exception){
             exception.printStackTrace();
         }
     }
