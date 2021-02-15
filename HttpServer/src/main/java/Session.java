@@ -26,8 +26,7 @@ public class Session extends Thread {
     private String directory;
 
     private BufferedReader in;
-    private PrintWriter out;
-    private BufferedOutputStream dataOut;
+    private OutputStream outputStream;
     private String method;
 
     Session(Socket socket, String directory) {
@@ -38,17 +37,15 @@ public class Session extends Thread {
 
     @Override
     public void run() {
-        //System.out.println("HUY");
         String fileRequested = "";
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream());
-            dataOut = new BufferedOutputStream(socket.getOutputStream());
+
 
             String input = in.readLine();
-            while (in.ready()) {
-                input += in.readLine();
-            }
+//            while (in.ready()) {
+//                input += in.readLine();
+//            }
 
             StringTokenizer parse;
             try {
@@ -62,37 +59,37 @@ public class Session extends Thread {
             System.out.println(method);
             fileRequested = parse.nextToken();
             System.out.println(fileRequested);
-            while (parse.hasMoreTokens()) {
-                System.out.println(parse.nextToken());
-            }
+//            while (parse.hasMoreTokens()) {
+//                System.out.println(parse.nextToken());
+//            }
             switch (method) {
                 case "GET":
-                    System.out.println("get metod epta");
                     var filePath = Path.of(this.directory + fileRequested);
                     if (Files.exists(filePath) && !Files.isDirectory(filePath)) {
                         System.out.println(filePath);
                         var fileBytes = Files.readAllBytes(filePath);
                         var extension = this.getFileExtension(filePath);
                         var type = CONTENT_TYPES.get(extension);
-                        var output = socket.getOutputStream();
-                        setHeader(output, 200, "OK", type, fileBytes);
+                        outputStream = socket.getOutputStream();
+                        setHeader(outputStream, 200, "OK", type, fileBytes);
+                        outputStream.close();
 //                        output.write(fileBytes);
                     } else {
                         var type = CONTENT_TYPES.get("text");
-                        var output = socket.getOutputStream();
-                        this.setHeader(output, 404, "Not Found", type, NOT_FOUND_MESSAGE.getBytes());
+                        outputStream = socket.getOutputStream();
+                        this.setHeader(outputStream, 404, "Not Found", type, NOT_FOUND_MESSAGE.getBytes());
+                        outputStream.close();
                     }
                     socket.close();
                     break;
                 case "POST":
-                    System.out.println("post metod epta");
-                    System.out.println(fileRequested);
                     filePath = Path.of(this.directory + fileRequested);
                     var extension = this.getFileExtension(filePath);
                     var type = CONTENT_TYPES.get(extension);
                     File file = new File(directory + fileRequested);
+                    outputStream = socket.getOutputStream();
                     if (!file.exists()) {
-                        this.setHeader(socket.getOutputStream(), 500, "Internal Server Error", type, INTERNAL_SERVER_ERROR.getBytes());
+                        this.setHeader(outputStream, 500, "Internal Server Error", type, INTERNAL_SERVER_ERROR.getBytes());
                         socket.close();
                         throw new FileNotFoundException();
                     } else {
@@ -101,18 +98,28 @@ public class Session extends Thread {
                         var data = inputStream.readAllBytes();
                         FileOutputStream fileOutputStream = new FileOutputStream(directory + "/new" + fileRequested);
                         fileOutputStream.write(data);
-                        var outputStream = socket.getOutputStream();
+                        outputStream = socket.getOutputStream();
                         setHeader(outputStream, 200, "OK", type, data);
+                        outputStream.close();
                     }
                     socket.close();
                     break;
                 case "OPTIONS":
-                    // var bytes=socket.getInputStream().readAllBytes();
-                    setHeader(socket.getOutputStream(), 200, "OK", "");
-                    System.out.println("OPTIONS");
-                    System.out.println(socket.isClosed() + "" + socket.isBound() + "" + socket.isConnected());
+                    filePath = Path.of(this.directory + fileRequested);
+                    extension = this.getFileExtension(filePath);
+                    type = CONTENT_TYPES.get(extension);
+                    file = new File(directory + fileRequested);
+                    outputStream = socket.getOutputStream();
+                    if (!file.exists()) {
+                        this.setHeader(outputStream, 404, "Not Found", type, NOT_FOUND_MESSAGE.getBytes());
+                        socket.close();
+                        throw new FileNotFoundException();
+                    } else {
+                        outputStream = socket.getOutputStream();
+                        setHeader(outputStream, 200, "OK", type, null);
+                        outputStream.close();
+                    }
                     socket.close();
-                    System.out.println(socket.isClosed());
                     break;
                 default:
                     // methodNotAllowed(method);
@@ -130,43 +137,19 @@ public class Session extends Thread {
 
     }
 
-//    private String getRequestUrl(InputStream inputStream) {
-//        var reader = new Scanner(inputStream).useDelimiter("\r\n");
-//        var line = reader.next();
-//        return line.split(" ")[1];
-//    }
-
-//    private void createResponse(Path file) throws IOException {
-//        out.println("HTTP/1.1 " + 200 + " " + "OK");
-//        out.println("Server: HTTP Server");
-//        out.println(String.format("Date: %s", Instant.now()));
-//        out.println("Access-Control-Allow-Origin: localhost");
-//        out.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-//        out.println("Content-Type: text/html; charset=utf-8");
-//        out.println();
-//        var fileBytes = Files.readAllBytes(file);
-//        var output = this.socket.getOutputStream();
-//        output.write(fileBytes);
-//        out.flush();
-//
-//        try {
-//            Thread.sleep(3000);
-//        } catch (InterruptedException ignored) {
-//            System.out.println("ignored ex");
-//        }
-//    }
-
     private void setHeader(OutputStream outputStream, int statusCode, String statusText, String type, byte[] fileBytes) {
         PrintStream ps = new PrintStream(outputStream);
         ps.printf("HTTP/1.1 %s %s%n", statusCode, statusText);
         ps.println("Server: HTTP Server");
         ps.println("Date: " + new Date());
+        ps.println("Expires: " + new Date());
         ps.println("Access-Control-Allow-Origin: localhost");
         ps.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        ps.printf("Content-Type: %s%n", type);
-        ps.printf("Content-Length: %s%n%n", fileBytes.length);
+
         if (method.equals("GET")) {
             try {
+                ps.printf("Content-Type: %s%n", type);
+                ps.printf("Content-Length: %s%n%n", fileBytes.length);
                 outputStream.write(fileBytes);
             } catch (IOException e) {
                 try {
@@ -176,22 +159,12 @@ public class Session extends Thread {
                 }
                 e.printStackTrace();
             }
+        } else if (method.equals("POST")) {
+            ps.printf("Content-Type: %s%n", type);
+            ps.printf("Content-Length: %s%n%n", fileBytes.length);
+        } else if (method.equals("OPTIONS")) {
+            ps.println("Connection: Keep-Alive");
+            ps.printf("Content-Length: %s%n%n", 0);
         }
-    }
-
-    private void setHeader(OutputStream outputStream, int statusCode, String statusText, String type) {
-        PrintStream ps = new PrintStream(outputStream);
-        ps.printf("HTTP/1.1 %s %s%n", statusCode, statusText);
-        ps.println("Allow: OPTIONS, GET, POST");
-        ps.println("Cache-Control: max-age=604800");
-        ps.println("Date: " + new Date());
-        ps.println("Expires: " + new Date());
-        ps.println("Server: HTTP Server");
-        ps.println("x-ec-custom-error: 1");
-//        ps.println("Access-Control-Allow-Origin: localhost");
-//        ps.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-//        ps.printf("Content-Type: text/html");
-        ps.println("Content-Length: " + 0);
-        ps.close();
     }
 }
