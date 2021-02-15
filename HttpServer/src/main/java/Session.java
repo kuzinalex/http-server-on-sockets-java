@@ -2,7 +2,6 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.*;
 
 import org.apache.log4j.LogManager;
@@ -18,9 +17,10 @@ public class Session extends Thread {
         put("", "text/plain");
 
     }};
-
-    public static final String NOT_FOUND_MESSAGE = "NOT FOUND";
-    public static final String INTERNAL_SERVER_ERROR = "INTERNAL SERVER ERROR";
+    private static final Logger LOG = LogManager.getLogger(Session.class);
+    private static final String NOT_FOUND_MESSAGE = "NOT FOUND";
+    private static final String INTERNAL_SERVER_ERROR = "INTERNAL SERVER ERROR";
+    private static final String NOT_IMPLEMENTED = "NOT IMPLEMENTED";
 
     private Socket socket;
     private String directory;
@@ -58,6 +58,8 @@ public class Session extends Thread {
             method = parse.nextToken();
             System.out.println(method);
             fileRequested = parse.nextToken();
+            LOG.info("Input is: " + input);
+            LOG.info("Request method: " + method);
             System.out.println(fileRequested);
 //            while (parse.hasMoreTokens()) {
 //                System.out.println(parse.nextToken());
@@ -66,12 +68,12 @@ public class Session extends Thread {
                 case "GET":
                     var filePath = Path.of(this.directory + fileRequested);
                     if (Files.exists(filePath) && !Files.isDirectory(filePath)) {
-                        System.out.println(filePath);
                         var fileBytes = Files.readAllBytes(filePath);
                         var extension = this.getFileExtension(filePath);
                         var type = CONTENT_TYPES.get(extension);
                         outputStream = socket.getOutputStream();
                         setHeader(outputStream, 200, "OK", type, fileBytes);
+                        LOG.info("GET request was accepted");
                         outputStream.close();
 //                        output.write(fileBytes);
                     } else {
@@ -79,6 +81,9 @@ public class Session extends Thread {
                         outputStream = socket.getOutputStream();
                         this.setHeader(outputStream, 404, "Not Found", type, NOT_FOUND_MESSAGE.getBytes());
                         outputStream.close();
+                        LOG.warn(NOT_FOUND_MESSAGE);
+                        LOG.warn("File: " + fileRequested + "not found, load");
+                        throw new FileNotFoundException();
                     }
                     socket.close();
                     break;
@@ -88,21 +93,25 @@ public class Session extends Thread {
                     var type = CONTENT_TYPES.get(extension);
                     File file = new File(directory + fileRequested);
                     outputStream = socket.getOutputStream();
-                    if (!file.exists()) {
+                    if (!file.exists() || file.isDirectory()) {
                         this.setHeader(outputStream, 500, "Internal Server Error", type, INTERNAL_SERVER_ERROR.getBytes());
                         socket.close();
+                        LOG.warn(INTERNAL_SERVER_ERROR);
+                        LOG.warn("File: " + fileRequested + "not found, load");
+                        LOG.info("Connection closed");
                         throw new FileNotFoundException();
                     } else {
-                        System.out.println(file.getAbsolutePath());
                         FileInputStream inputStream = new FileInputStream(file.getAbsolutePath());
                         var data = inputStream.readAllBytes();
                         FileOutputStream fileOutputStream = new FileOutputStream(directory + "/new" + fileRequested);
                         fileOutputStream.write(data);
                         outputStream = socket.getOutputStream();
                         setHeader(outputStream, 200, "OK", type, data);
+                        LOG.info("POST request was accepted");
                         outputStream.close();
                     }
                     socket.close();
+                    LOG.info("Connection closed");
                     break;
                 case "OPTIONS":
                     filePath = Path.of(this.directory + fileRequested);
@@ -113,16 +122,27 @@ public class Session extends Thread {
                     if (!file.exists()) {
                         this.setHeader(outputStream, 404, "Not Found", type, NOT_FOUND_MESSAGE.getBytes());
                         socket.close();
+                        LOG.warn(NOT_FOUND_MESSAGE);
+                        LOG.warn("File: " + fileRequested + "not found, load");
+                        LOG.info("Connection closed");
                         throw new FileNotFoundException();
                     } else {
                         outputStream = socket.getOutputStream();
                         setHeader(outputStream, 200, "OK", type, null);
+                        LOG.info("OPTIONS request was accepted");
                         outputStream.close();
                     }
                     socket.close();
+                    LOG.info("Connection closed");
                     break;
                 default:
-                    // methodNotAllowed(method);
+                    outputStream = socket.getOutputStream();
+                    filePath = Path.of(this.directory + fileRequested);
+                    extension = this.getFileExtension(filePath);
+                    type = CONTENT_TYPES.get(extension);
+                    this.setHeader(outputStream, 501, "Not Implemented", type, NOT_IMPLEMENTED.getBytes());
+                    LOG.warn("Unknown method: " + method);
+                    socket.close();
                     break;
             }
         } catch (IOException e) {
@@ -165,6 +185,9 @@ public class Session extends Thread {
         } else if (method.equals("OPTIONS")) {
             ps.println("Connection: Keep-Alive");
             ps.printf("Content-Length: %s%n%n", 0);
+        }else {
+            ps.printf("Content-Type: %s%n", type);
+            ps.printf("Content-Length: %s%n%n", fileBytes.length);
         }
     }
 }

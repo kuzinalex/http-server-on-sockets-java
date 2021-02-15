@@ -1,0 +1,22 @@
+[main] INFO  HttpServer  - Server started. Listening for connections on port :8080
+[Thread-3] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-3] INFO  Session  - Request method: GET
+[Thread-3] INFO  Session  - GET request was accepted
+[Thread-7] INFO  Session  - Input is: POST /gena.jpg HTTP/1.1
+[Thread-7] INFO  Session  - Request method: POST
+[Thread-7] INFO  Session  - POST request was accepted
+[Thread-7] INFO  Session  - Connection closed
+[Thread-11] INFO  Session  - Input is: OPTIONS /gena.jpg HTTP/1.1
+[Thread-11] INFO  Session  - Request method: OPTIONS
+[Thread-11] INFO  Session  - OPTIONS request was accepted
+[Thread-11] INFO  Session  - Connection closed
+[Thread-15] INFO  Session  - Input is: PUT /gena.jpg HTTP/1.1
+[Thread-15] INFO  Session  - Request method: PUT
+[Thread-15] WARN  Session  - Unknown method: PUT
+[main] INFO  HttpServer  - Server started. Listening for connections on port :8080
+[Thread-3] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-3] INFO  Session  - Request method: GET
+[Thread-3] INFO  Session  - GET request was accepted
+[Thread-7] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-7] INFO  Session  - Request method: GET
+[Thread-7] INFO  Session  - GET request was accepted
