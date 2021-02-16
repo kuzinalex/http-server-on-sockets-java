@@ -20,3 +20,44 @@
 [Thread-7] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
 [Thread-7] INFO  Session  - Request method: GET
 [Thread-7] INFO  Session  - GET request was accepted
+[main] INFO  HttpServer  - Server started. Listening for connections on port :8080
+[Thread-3] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-3] INFO  Session  - Request method: GET
+[Thread-3] INFO  Session  - GET request was accepted
+[Thread-3] INFO  Session  - Connection closed
+[Thread-7] INFO  Session  - Input is: GET /gen%D1%84a.jpg HTTP/1.1
+[Thread-7] INFO  Session  - Request method: GET
+[Thread-7] WARN  Session  - NOT FOUND
+[Thread-7] WARN  Session  - File: /gen%D1%84a.jpgnot found, load
+[Thread-11] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-11] INFO  Session  - Request method: GET
+[Thread-11] INFO  Session  - GET request was accepted
+[Thread-11] INFO  Session  - Connection closed
+[Thread-15] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-15] INFO  Session  - Request method: GET
+[Thread-15] INFO  Session  - GET request was accepted
+[Thread-15] INFO  Session  - Connection closed
+[main] INFO  HttpServer  - Server started. Listening for connections on port :8080
+[Thread-3] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-3] INFO  Session  - Request method: GET
+[Thread-3] INFO  Session  - GET request was accepted
+[Thread-3] INFO  Session  - Connection closed
+[Thread-7] INFO  Session  - Input is: POST /gena.jpg HTTP/1.1
+[Thread-7] INFO  Session  - Request method: POST
+[Thread-7] INFO  Session  - POST request was accepted
+[Thread-7] INFO  Session  - Connection closed
+[main] INFO  HttpServer  - Server started. Listening for connections on port :8080
+[Thread-3] INFO  Session  - Input is: POST /gena.jpg HTTP/1.1
+[Thread-3] INFO  Session  - Request method: POST
+[Thread-3] INFO  Session  - POST request was accepted
+[Thread-3] INFO  Session  - Connection closed
+[Thread-7] INFO  Session  - Input is: GET /gena.jpg HTTP/1.1
+[Thread-7] INFO  Session  - Request method: GET
+[Thread-7] INFO  Session  - GET request was accepted
+[Thread-7] INFO  Session  - Connection closed
+[Thread-11] INFO  Session  - Input is: GET /gen%D1%84a.jpg HTTP/1.1
+[Thread-11] INFO  Session  - Request method: GET
+[Thread-11] WARN  Session  - NOT FOUND
+[Thread-11] WARN  Session  - File: /gen%D1%84a.jpgnot found, load
+[Thread-11] INFO  Session  - Connection closed
+[main] INFO  HttpServer  - Server started. Listening for connections on port :8080

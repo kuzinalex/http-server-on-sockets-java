@@ -40,13 +40,7 @@ public class Session extends Thread {
         String fileRequested = "";
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-
             String input = in.readLine();
-//            while (in.ready()) {
-//                input += in.readLine();
-//            }
-
             StringTokenizer parse;
             try {
                 parse = new StringTokenizer(input);
@@ -54,16 +48,11 @@ public class Session extends Thread {
             } catch (NullPointerException e) {
                 return;
             }
-
             method = parse.nextToken();
-            System.out.println(method);
             fileRequested = parse.nextToken();
             LOG.info("Input is: " + input);
             LOG.info("Request method: " + method);
-            System.out.println(fileRequested);
-//            while (parse.hasMoreTokens()) {
-//                System.out.println(parse.nextToken());
-//            }
+
             switch (method) {
                 case "GET":
                     var filePath = Path.of(this.directory + fileRequested);
@@ -75,7 +64,6 @@ public class Session extends Thread {
                         setHeader(outputStream, 200, "OK", type, fileBytes);
                         LOG.info("GET request was accepted");
                         outputStream.close();
-//                        output.write(fileBytes);
                     } else {
                         var type = CONTENT_TYPES.get("text");
                         outputStream = socket.getOutputStream();
@@ -83,9 +71,11 @@ public class Session extends Thread {
                         outputStream.close();
                         LOG.warn(NOT_FOUND_MESSAGE);
                         LOG.warn("File: " + fileRequested + "not found, load");
+                        LOG.info("Connection closed");
                         throw new FileNotFoundException();
                     }
                     socket.close();
+                    LOG.info("Connection closed");
                     break;
                 case "POST":
                     filePath = Path.of(this.directory + fileRequested);
@@ -162,9 +152,7 @@ public class Session extends Thread {
         ps.printf("HTTP/1.1 %s %s%n", statusCode, statusText);
         ps.println("Server: HTTP Server");
         ps.println("Date: " + new Date());
-        ps.println("Expires: " + new Date());
-        ps.println("Access-Control-Allow-Origin: localhost");
-        ps.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        ps.println("Connection: Keep-Alive");
 
         if (method.equals("GET")) {
             try {
@@ -180,14 +168,13 @@ public class Session extends Thread {
                 e.printStackTrace();
             }
         } else if (method.equals("POST")) {
-            ps.printf("Content-Type: %s%n", type);
-            ps.printf("Content-Length: %s%n%n", fileBytes.length);
-        } else if (method.equals("OPTIONS")) {
-            ps.println("Connection: Keep-Alive");
             ps.printf("Content-Length: %s%n%n", 0);
-        }else {
-            ps.printf("Content-Type: %s%n", type);
-            ps.printf("Content-Length: %s%n%n", fileBytes.length);
+        } else if (method.equals("OPTIONS")) {
+            ps.println("Access-Control-Allow-Origin: localhost");
+            ps.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+            ps.printf("Content-Length: %s%n%n", 0);
+        } else {
+            ps.printf("Content-Length: %s%n%n", 0);
         }
     }
 }
