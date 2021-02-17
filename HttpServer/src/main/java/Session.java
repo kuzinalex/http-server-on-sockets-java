@@ -168,13 +168,12 @@ public class Session extends Thread {
                 e.printStackTrace();
             }
         } else if (method.equals("POST")) {
-            ps.printf("Content-Length: %s%n%n", 0);
+            ps.println("\n");
         } else if (method.equals("OPTIONS")) {
             ps.println("Access-Control-Allow-Origin: localhost");
-            ps.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-            ps.printf("Content-Length: %s%n%n", 0);
+            ps.println("Access-Control-Allow-Methods: GET, POST, OPTIONS\n");
         } else {
-            ps.printf("Content-Length: %s%n%n", 0);
+            ps.println("\n");
         }
     }
 }
